@@ -1,0 +1,35 @@
+name: Docker CI
+run-name: Docker CI for ${{ github.event.inputs.artefact-to-deploy }}
+
+on:
+  workflow_call:
+    inputs:
+      os-type:
+        description: "Operating system type for the docker image"
+        required: true
+        type: string
+      python-artifact:
+        description: "Python artefact to build the docker image"
+        required: true
+        type: string
+
+env:
+  DOCKER_IMAGE_NAME: todoapp
+
+jobs:
+  docker-ci:
+    name: Docker CI
+    runs-on: ${{ inputs.os-type }}
+    steps:
+      - name: Download python artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ inputs.python-artifact }}
+          path: ./app
+
+      - name: Build and Push Docker Image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./app
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.DOCKER_IMAGE_NAME }}:${{ github.sha }}
