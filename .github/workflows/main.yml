@@ -99,6 +99,7 @@ jobs:
 
   docker-ci:
     name: Docker CI
+    needs: python-ci
     uses: ./.github/workflows/docker-ci.yml
     with:
       os-type: ${{ contains(github.event.inputs.artefact-to-deploy, 'windows') && 'windows-latest' || 'ubuntu-latest' }}
