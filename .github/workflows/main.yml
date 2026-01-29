@@ -86,16 +86,17 @@ jobs:
           flake8 . --exit-zero --max-complexity=10
 
       - name: Upload python artifact
-        if: matrix.artefact == github.event.inputs.artefact-to-deploy
         uses: actions/upload-artifact@v4
+        if: matrix.artefact == github.event.inputs.artefact-to-deploy
         with:
-          name: python-artifacts-${{ matrix.artefact }}
+          name: python-artifacts-${{ matrix.artefact }}-${{ github.run_id }}
           path: src/*
 
       - name: Upload Helm Artifacts
         uses: actions/upload-artifact@v4
+        if: matrix.artefact == github.event.inputs.artefact-to-deploy
         with:
-          name: helm-artifacts
+          name: helm-artifacts-${{ matrix.artefact }}-${{ github.run_id }}
           path: ${{ github.workspace }}/helm-charts/*
 
   docker-ci:
@@ -104,7 +105,7 @@ jobs:
     uses: ./.github/workflows/docker-ci.yml
     with:
       os-type: ${{ contains(github.event.inputs.artefact-to-deploy, 'windows') && 'windows-latest' || 'ubuntu-latest' }}
-      python-artifact: python-artifacts-${{ github.event.inputs.artefact-to-deploy }}
+      python-artifact: python-artifacts-${{ github.event.inputs.artefact-to-deploy }}-${{ github.run_id }}
 
   helm-ci:
     name: Helm CI
@@ -115,7 +116,7 @@ jobs:
       - name: Download Helm Artifacts
         uses: actions/download-artifact@v4
         with:
-          name: helm-artifacts
+          name: helm-artifacts-${{ github.event.inputs.artefact-to-deploy }}-${{ github.run_id }}
           path: ./helm-charts
 
       - name: Set up Helm
