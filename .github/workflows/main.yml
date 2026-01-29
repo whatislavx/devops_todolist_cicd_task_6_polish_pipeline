@@ -85,7 +85,8 @@ jobs:
         run: |
           flake8 . --exit-zero --max-complexity=10
 
-      - name: Upload python artifacts
+      - name: Upload python artifact
+        if: matrix.artefact == github.event.inputs.artefact-to-deploy
         uses: actions/upload-artifact@v4
         with:
           name: python-artifacts-${{ matrix.artefact }}
