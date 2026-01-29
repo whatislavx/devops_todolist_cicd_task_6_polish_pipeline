@@ -81,44 +81,48 @@ jobs:
       - name: Check Complexity
         run: flake8 . --exit-zero --max-complexity=10
 
-  upload-artifacts:
-    name: Upload Artifacts
+      - name: Upload tested artifact
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-artifact-${{ matrix.artefact }}
+          path: src/*
+
+  helm-artifacts:
+    name: Upload Helm Artifacts
     needs: python-ci
     runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Upload Python Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: python-artifacts-${{ github.event.inputs.artefact-to-deploy }}
-          path: src/*
-
       - name: Upload Helm Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: helm-artifacts-${{ github.event.inputs.artefact-to-deploy }}
+          name: helm-artifacts
           path: helm-charts/*
 
   docker-ci:
     name: Build & push image
-    needs: upload-artifacts
+    needs: python-ci
+    if: github.event_name == 'workflow_dispatch'
     uses: ./.github/workflows/docker-ci.yml
     secrets: inherit
     with:
       os-type: ${{ contains(github.event.inputs.artefact-to-deploy, 'windows') && 'windows-latest' || 'ubuntu-latest' }}
-      python-artifact: python-artifacts-${{ github.event.inputs.artefact-to-deploy }}
+      python-artifact: python-artifact-${{ github.event.inputs.artefact-to-deploy }}
 
   helm-ci:
     name: Helm lint & package
     runs-on: ubuntu-latest
-    needs: upload-artifacts
+    needs: helm-artifacts
+    if: github.event_name == 'workflow_dispatch'
     steps:
       - name: Download Helm Artifacts
         uses: actions/download-artifact@v4
         with:
-          name: helm-artifacts-${{ github.event.inputs.artefact-to-deploy }}
+          name: helm-artifacts
           path: ./helm-charts
 
       - name: Set up Helm
@@ -142,6 +146,7 @@ jobs:
   deploy-helm-dev:
     name: Deploy to development
     needs: [helm-ci, docker-ci]
+    if: github.event_name == 'workflow_dispatch'
     uses: ./.github/workflows/reusable-deployment.yml
     secrets: inherit
     with:
@@ -151,6 +156,7 @@ jobs:
   deploy-helm-stg:
     name: Deploy to staging
     needs: [deploy-helm-dev]
+    if: github.event_name == 'workflow_dispatch'
     uses: ./.github/workflows/reusable-deployment.yml
     secrets: inherit
     with:
