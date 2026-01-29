@@ -105,6 +105,7 @@ jobs:
     name: Docker CI
     needs: upload-artifacts
     uses: ./.github/workflows/docker-ci.yml
+    secrets: inherit
     with:
       os-type: ${{ contains(github.event.inputs.artefact-to-deploy, 'windows') && 'windows-latest' || 'ubuntu-latest' }}
       python-artifact: python-artifacts-${{ github.event.inputs.artefact-to-deploy }}
