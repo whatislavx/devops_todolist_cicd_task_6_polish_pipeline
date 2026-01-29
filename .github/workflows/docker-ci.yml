@@ -1,5 +1,5 @@
-name: Docker CI
-run-name: Docker CI for ${{ github.event.inputs.artefact-to-deploy }}
+name: Docker Build & Push
+run-name: Build & push todoapp for ${{ inputs.os-type }}
 
 on:
   workflow_call:
@@ -18,7 +18,7 @@ env:
 
 jobs:
   docker-ci:
-    name: Docker CI
+    name: Build & push image
     runs-on: ${{ inputs.os-type }}
     steps:
       - name: Download python artifacts

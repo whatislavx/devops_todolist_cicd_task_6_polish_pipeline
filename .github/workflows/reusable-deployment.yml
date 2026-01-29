@@ -1,5 +1,5 @@
-name: Deploy Helm
-run-name: Deploy Helm Chart to ${{ inputs.environment }}
+name: Helm Deploy
+run-name: Deploy to ${{ inputs.environment }}
 
 on:
   workflow_call:
@@ -31,7 +31,7 @@ env:
 
 jobs:
   deploy-helm:
-    name: ${{ inputs.environment }}
+    name: Deploy to ${{ inputs.environment }}
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment }}
 

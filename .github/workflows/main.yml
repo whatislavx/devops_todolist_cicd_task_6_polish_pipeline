@@ -102,7 +102,7 @@ jobs:
           path: helm-charts/*
 
   docker-ci:
-    name: Docker CI
+    name: Build & push image
     needs: upload-artifacts
     uses: ./.github/workflows/docker-ci.yml
     secrets: inherit
@@ -111,7 +111,7 @@ jobs:
       python-artifact: python-artifacts-${{ github.event.inputs.artefact-to-deploy }}
 
   helm-ci:
-    name: Helm CI
+    name: Helm lint & package
     runs-on: ubuntu-latest
     needs: upload-artifacts
     steps:
@@ -140,7 +140,7 @@ jobs:
           path: helm-charts/packages/*.tgz
 
   deploy-helm-dev:
-    name: Deployment
+    name: Deploy to development
     needs: [helm-ci, docker-ci]
     uses: ./.github/workflows/reusable-deployment.yml
     secrets: inherit
@@ -149,7 +149,7 @@ jobs:
       docker-image-version: "${{ github.sha }}"
 
   deploy-helm-stg:
-    name: Deployment
+    name: Deploy to staging
     needs: [deploy-helm-dev]
     uses: ./.github/workflows/reusable-deployment.yml
     secrets: inherit
