@@ -1,13 +1,12 @@
 name: python-deployment
 
-run-name: ${{ github.actor }} - ${{ github.ref_name}} -${{ github.sha }}
+run-name: ${{ github.actor }} - ${{ github.ref_name }} - ${{ github.sha }}
 
 on:
   push:
     branches: ["main"]
   pull_request:
     branches: ["main"]
-
   workflow_dispatch:
     inputs:
       artefact-to-deploy:
@@ -32,7 +31,6 @@ jobs:
   python-ci:
     name: Python CI
     runs-on: ${{ matrix.os }}
-
     strategy:
       matrix:
         include:
@@ -57,7 +55,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Python ${{ env.PYTHON_VERSION }}
+      - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
@@ -78,45 +76,48 @@ jobs:
           coverage report
 
       - name: Linting
-        run: |
-          flake8 . --show-source --statistics --exit-zero
+        run: flake8 . --show-source --statistics --exit-zero
 
       - name: Check Complexity
-        run: |
-          flake8 . --exit-zero --max-complexity=10
+        run: flake8 . --exit-zero --max-complexity=10
 
-      - name: Upload python artifact
+  upload-artifacts:
+    name: Upload Artifacts
+    needs: python-ci
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Upload Python Artifact
         uses: actions/upload-artifact@v4
-        if: matrix.artefact == github.event.inputs.artefact-to-deploy
         with:
-          name: python-artifacts-${{ matrix.artefact }}-${{ github.run_id }}
+          name: python-artifacts-${{ github.event.inputs.artefact-to-deploy }}
           path: src/*
 
       - name: Upload Helm Artifacts
         uses: actions/upload-artifact@v4
-        if: matrix.artefact == github.event.inputs.artefact-to-deploy
         with:
-          name: helm-artifacts-${{ matrix.artefact }}-${{ github.run_id }}
-          path: ${{ github.workspace }}/helm-charts/*
+          name: helm-artifacts-${{ github.event.inputs.artefact-to-deploy }}
+          path: helm-charts/*
 
   docker-ci:
     name: Docker CI
-    needs: python-ci
+    needs: upload-artifacts
     uses: ./.github/workflows/docker-ci.yml
     with:
       os-type: ${{ contains(github.event.inputs.artefact-to-deploy, 'windows') && 'windows-latest' || 'ubuntu-latest' }}
-      python-artifact: python-artifacts-${{ github.event.inputs.artefact-to-deploy }}-${{ github.run_id }}
+      python-artifact: python-artifacts-${{ github.event.inputs.artefact-to-deploy }}
 
   helm-ci:
     name: Helm CI
     runs-on: ubuntu-latest
-    needs: python-ci
-
+    needs: upload-artifacts
     steps:
       - name: Download Helm Artifacts
         uses: actions/download-artifact@v4
         with:
-          name: helm-artifacts-${{ github.event.inputs.artefact-to-deploy }}-${{ github.run_id }}
+          name: helm-artifacts-${{ github.event.inputs.artefact-to-deploy }}
           path: ./helm-charts
 
       - name: Set up Helm
