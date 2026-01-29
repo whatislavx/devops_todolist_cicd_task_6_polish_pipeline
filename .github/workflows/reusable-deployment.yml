@@ -58,7 +58,7 @@ jobs:
 
       - name: Deploy Helm Chart
         env:
-          DOCKER_IMAGE_REPO: "${{ secrets.DOCKER_HUB_USERNAME }}/${{ env.DOCKER_IMAGE_NAME }}"
+          DOCKER_IMAGE_REPO: "${{ secrets.DOCKERHUB_USERNAME }}/${{ env.DOCKER_IMAGE_NAME }}"
         run: |
           helm upgrade --install ${{ env.HELM_RELEASE_NAME }} \
             ${{ env.CHART_PKG_PATH }}/todoapp-*.tgz \
